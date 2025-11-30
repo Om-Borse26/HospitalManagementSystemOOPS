@@ -34,11 +34,6 @@ This Hospital Management System provides a complete solution for managing health
 
 2. **Set up MySQL Database**
    ```sql
-   CREATE DATABASE hospital_management;
-   USE hospital_management;
-   
-   -- Run the SQL schema 
-   -- MySQL
    CREATE DATABASE IF NOT EXISTS hospital_management
      CHARACTER SET utf8mb4
      COLLATE utf8mb4_0900_ai_ci;
