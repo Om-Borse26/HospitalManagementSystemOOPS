@@ -37,8 +37,94 @@ This Hospital Management System provides a complete solution for managing health
    CREATE DATABASE hospital_management;
    USE hospital_management;
    
-   -- Run the SQL schema file
-   SOURCE database/schema.sql;
+   -- Run the SQL schema 
+   -- MySQL
+   CREATE DATABASE IF NOT EXISTS hospital_management
+     CHARACTER SET utf8mb4
+     COLLATE utf8mb4_0900_ai_ci;
+   
+   USE hospital_management;
+   
+   -- Patients: id, name, age, gender
+   CREATE TABLE IF NOT EXISTS patients (
+     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+     name VARCHAR(100) NOT NULL,
+     age TINYINT UNSIGNED NOT NULL,
+     gender ENUM('Male','Female','Other') NOT NULL,
+     PRIMARY KEY (id)
+   ) ENGINE=InnoDB;
+   
+   -- Doctors: id, name, specialization
+   CREATE TABLE IF NOT EXISTS doctors (
+     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+     name VARCHAR(100) NOT NULL,
+     specialization VARCHAR(100) NOT NULL,
+     PRIMARY KEY (id)
+   ) ENGINE=InnoDB;
+   
+   -- Appointments: id, patient_id, doctor_id, appointment_date
+   CREATE TABLE IF NOT EXISTS appointments (
+     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+     patient_id INT UNSIGNED NOT NULL,
+     doctor_id INT UNSIGNED NOT NULL,
+     appointment_date DATE NOT NULL,
+     PRIMARY KEY (id),
+     -- optional but useful to prevent double booking per doctor per date
+     UNIQUE KEY uq_doctor_date (doctor_id, appointment_date),
+     CONSTRAINT fk_appointments_patient
+       FOREIGN KEY (patient_id) REFERENCES patients (id)
+       ON DELETE CASCADE ON UPDATE CASCADE,
+     CONSTRAINT fk_appointments_doctor
+       FOREIGN KEY (doctor_id) REFERENCES doctors (id)
+       ON DELETE CASCADE ON UPDATE CASCADE
+   ) ENGINE=InnoDB;
+   
+   USE hospital_management;
+   
+   -- 1. Create users table (new)
+   CREATE TABLE IF NOT EXISTS users (
+     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+     username VARCHAR(50) NOT NULL UNIQUE,
+     password VARCHAR(255) NOT NULL,
+     role ENUM('PATIENT', 'DOCTOR') NOT NULL,
+     PRIMARY KEY (id),
+     INDEX idx_username (username)
+   ) ENGINE=InnoDB;
+   
+   -- 2. Add user_id column to patients (allow NULL initially for existing records)
+   ALTER TABLE patients 
+   ADD COLUMN user_id INT UNSIGNED NULL AFTER gender;
+   
+   -- 3. Add user_id column to doctors (allow NULL initially for existing records)
+   ALTER TABLE doctors 
+   ADD COLUMN user_id INT UNSIGNED NULL AFTER specialization;
+   
+   -- 4. Add foreign key constraints
+   ALTER TABLE patients 
+   ADD CONSTRAINT fk_patients_user
+     FOREIGN KEY (user_id) REFERENCES users (id)
+     ON DELETE CASCADE ON UPDATE CASCADE;
+   
+   ALTER TABLE doctors 
+   ADD CONSTRAINT fk_doctors_user
+     FOREIGN KEY (user_id) REFERENCES users (id)
+     ON DELETE CASCADE ON UPDATE CASCADE;
+   
+   -- 5. Optional: Create some test users and link them
+   -- Example: Create a test patient user
+   INSERT INTO users (username, password, role) 
+   VALUES ('patient1', 'password123', 'PATIENT');
+   
+   -- Get the last inserted user_id and update an existing patient
+   -- UPDATE patients SET user_id = LAST_INSERT_ID() WHERE id = 1;
+   
+   -- Example: Create a test doctor user
+   INSERT INTO users (username, password, role) 
+   VALUES ('doctor1', 'password123', 'DOCTOR');
+   
+   -- UPDATE doctors SET user_id = LAST_INSERT_ID() WHERE id = 1;
+   
+   select * from users;
    ```
 
 3. **Configure Database Connection**
